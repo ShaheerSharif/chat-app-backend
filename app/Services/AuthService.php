@@ -26,6 +26,11 @@ class AuthService
         return null;
     }
 
+    public function check_user_exists_by_id(int $userId): bool
+    {
+        return User::where('id', $userId)->exists();
+    }
+
     public function get_user_by_id(int $userId, array $columns = ['*']): ?User
     {
         return User::select($columns)->find($userId);
