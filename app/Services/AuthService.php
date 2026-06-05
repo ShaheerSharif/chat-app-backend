@@ -26,8 +26,8 @@ class AuthService
         return null;
     }
 
-    public function get_user_by_id(int $userId): ?User
+    public function get_user_by_id(int $userId, array $columns = ['*']): ?User
     {
-        return User::find($userId);
+        return User::select($columns)->find($userId);
     }
 }
