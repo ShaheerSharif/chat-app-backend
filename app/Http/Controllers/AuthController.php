@@ -31,7 +31,7 @@ class AuthController extends Controller
             return $this->jsonError('Validation failed', 422);
         }
 
-        $userId = $this->authService->check_user_exists($request->email, $request->password);
+        $userId = $this->authService->checkUserExists($request->email, $request->password);
 
         if (!$userId) {
             return $this->jsonError('Invalid credentials', 401);

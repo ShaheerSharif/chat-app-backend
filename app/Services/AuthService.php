@@ -16,7 +16,7 @@ class AuthService
         ]);
     }
 
-    public function check_user_exists(string $email, string $password): ?int
+    public function checkUserExists(string $email, string $password): ?int
     {
         $user = User::where('email', $email)->select('id', 'password')->first();
 
@@ -26,7 +26,7 @@ class AuthService
         return null;
     }
 
-    public function check_user_exists_by_id(int $userId): bool
+    public function checkUserExistsById(int $userId): bool
     {
         return User::where('id', $userId)->exists();
     }

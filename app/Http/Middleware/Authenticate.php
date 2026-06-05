@@ -28,7 +28,7 @@ class Authenticate extends Middleware
             $userId = $request->cookie('user_id');
             $authService = new AuthService();
 
-            if ($userId && $authService->check_user_exists_by_id($userId)) {
+            if ($userId && $authService->checkUserExistsById($userId)) {
                 return;
             }
         }
