@@ -4,12 +4,21 @@ namespace App\Http\Middleware;
 
 use App\Services\AuthService;
 use App\Traits\SendsJSONResponse;
-use Illuminate\Auth\Middleware\Authenticate as Middleware;
 use Closure;
+use Illuminate\Auth\Middleware\Authenticate as Middleware;
+use Illuminate\Contracts\Auth\Factory as Auth;
 
 class Authenticate extends Middleware
 {
     use SendsJSONResponse;
+
+    protected AuthService $authService;
+
+    public function __construct(Auth $auth, AuthService $authService)
+    {
+        $this->authService = $authService;
+        parent::__construct($auth);
+    }
 
     public function handle($request, Closure $next, ...$guards)
     {
@@ -28,9 +37,8 @@ class Authenticate extends Middleware
         // Check for user_id cookie
         if ($request->hasCookie('user_id')) {
             $userId = $request->cookie('user_id');
-            $authService = new AuthService();
 
-            if ($userId && $authService->checkUserExistsById($userId)) {
+            if ($userId && $this->authService->checkUserExistsById($userId)) {
                 return;
             }
         }
