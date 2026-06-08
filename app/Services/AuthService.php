@@ -16,14 +16,32 @@ class AuthService
         ]);
     }
 
-    public function checkUserExists(string $email, string $password): ?int
+    /**
+     * Check if user exists with email and password. Stores remember token if provided.
+     */
+    public function login(string $email, string $password, ?string $rememberToken): ?int
     {
-        $user = User::where('email', $email)->select('id', 'password')->first();
+        $user = User::where('email', $email)->select(
+            'id',
+            'password',
+            'remember_token',
+        )->first();
 
-        if ($user && Hash::check($password, $user->password)) {
-            return $user->id;
+        if (!$user || !Hash::check($password, $user->password)) {
+            return null;
         }
-        return null;
+
+        if ($rememberToken) {
+            $user->remember_token = $rememberToken;
+            $user->save();
+        }
+
+        return $user->id;
+    }
+
+    public function resetRememberToken(int $userId)
+    {
+        return User::where('id', $userId)->update(['remember_token' => null]);
     }
 
     public function checkUserExistsById(int $userId): bool
@@ -31,8 +49,11 @@ class AuthService
         return User::where('id', $userId)->exists();
     }
 
-    public function get_user_by_id(int $userId, array $columns = ['*']): ?User
+    public function getUserById(int $userId, array $columns = ['*']): ?User
     {
+        $ignoreCols = ['password', 'remember_token'];
+        $columns = array_values(array_diff($columns, $ignoreCols));
+
         return User::select($columns)->find($userId);
     }
 }

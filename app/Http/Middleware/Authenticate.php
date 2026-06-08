@@ -28,26 +28,26 @@ class Authenticate extends Middleware
         } catch (\Illuminate\Auth\AuthenticationException $e) {
             return $this->unauthenticated($request, $guards);
         } catch (\Exception $e) {
-            return $this->jsonError('Internal Server Error', 500);
+            return $this->jsonError('Authentication failed', 500);
         }
     }
 
     protected function authenticate($request, array $guards)
     {
-        // Check for user_id cookie
-        if ($request->hasCookie('user_id')) {
-            $userId = $request->cookie('user_id');
+        // Check for user cookie
+        if ($request->hasCookie('user')) {
+            $user = json_decode($request->cookie('user'), true);
 
-            if ($userId && $this->authService->checkUserExistsById($userId)) {
+            if ($user && $this->authService->checkUserExistsById($user->id)) {
                 return;
             }
         }
 
-        throw new \Illuminate\Auth\AuthenticationException('Unauthenticated', $guards);
+        throw new \Illuminate\Auth\AuthenticationException('Authentication required', $guards);
     }
 
     protected function unauthenticated($request, array $guards)
     {
-        return $this->jsonError('Unauthenticated', 401);
+        return $this->jsonError('Authentication required', 401);
     }
 }

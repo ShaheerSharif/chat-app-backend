@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\StringHelper;
 use App\Http\Controllers\Controller;
 use App\Services\AuthService;
 use App\Traits\SendsJSONResponse;
@@ -26,22 +27,33 @@ class AuthController extends Controller
             $request->validate([
                 'email' => 'required|email',
                 'password' => 'required|string',
+                'remember_me' => 'boolean',
             ]);
         } catch (ValidationException $e) {
             return $this->jsonError('Validation failed', 422);
         }
 
-        $userId = $this->authService->checkUserExists($request->email, $request->password);
+        $token = $request->remember_me ? StringHelper::generateRandomString(100) : null;
+
+        $userId = $this->authService->login($request->email, $request->password, $token);
 
         if (!$userId) {
             return $this->jsonError('Invalid credentials', 401);
         }
 
+        $data = [
+            'id' => $userId,
+        ];
+
+        if ($token) {
+            $data['remember_token'] = $token;
+        }
+
         return $this
-            ->jsonSuccess('Login successful', ['user' => ['id' => $userId ]])
+            ->jsonSuccess('Login successful', [ 'id' => $userId ])
             ->cookie(
-                'user_id',
-                $userId,
+                'user',
+                json_encode($data),
                 config('session.lifetime'),
                 null,
                 null,
@@ -75,16 +87,26 @@ class AuthController extends Controller
     // GET /api/auth/logout
     public function logout(Request $request)
     {
-        return $this
-            ->jsonSuccess('Logout successful')
-            ->cookie(
-                'user_id',
-                '',
-                -1,
-                null,
-                null,
-                config('session.secure'),
-                true
-            );
+        $user = json_decode($request->cookie('user'), true);
+
+        if ($user) {
+            $this->authService->resetRememberToken($user->id);
+        }
+
+        try {
+            return $this
+                ->jsonSuccess('Logout successful', [ 'id' => $user->id ])
+                ->cookie(
+                    'user',
+                    '',
+                    -1,
+                    null,
+                    null,
+                    config('session.secure'),
+                    true
+                );
+        } catch (\Exception $e) {
+            return $this->jsonError('Logout failed', 500);
+        }
     }
 }
