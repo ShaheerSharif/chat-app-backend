@@ -18,6 +18,8 @@ class Authenticate extends Middleware
             return $next($request);
         } catch (\Illuminate\Auth\AuthenticationException $e) {
             return $this->unauthenticated($request, $guards);
+        } catch (\Exception $e) {
+            return $this->jsonError('Internal Server Error', 500);
         }
     }
 
